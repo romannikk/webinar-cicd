@@ -34,7 +34,7 @@ target_link_libraries(test_version
 )
 
 if (MSVC)
-    target_compile_options(hip_filter_cli PRIVATE
+    target_compile_options(ip_filter_cli PRIVATE
         /W4
     )
     target_compile_options(ip_filter PRIVATE
@@ -47,7 +47,7 @@ else ()
     target_compile_options(ip_filter_cli PRIVATE
         -Wall -Wextra -pedantic -Werror
     )
-    target_compile_options(helloworip_filterld PRIVATE
+    target_compile_options(ip_filterl PRIVATE
         -Wall -Wextra -pedantic -Werror
     )
     target_compile_options(test_version PRIVATE
