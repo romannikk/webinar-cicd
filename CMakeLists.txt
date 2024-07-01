@@ -10,8 +10,8 @@ find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 configure_file(version.h.in version.h)
 
 add_executable(print_ip sfinae.cpp)
-add_library(sfinae lib.cpp)
 add_executable(test_version test_version.cpp)
+add_library(sfinae lib.cpp)
 
 set_target_properties(print_ip sfinae test_version PROPERTIES
     CXX_STANDARD 14
