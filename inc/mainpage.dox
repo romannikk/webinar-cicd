@@ -1,0 +1,21 @@
+/** @mainpage
+ *
+ *  @section intro About
+ *
+ *  Simple vector editor architecture.
+ *  This is an exercise project of Otus cpp course.
+ *
+ *  @section usage Usage
+ *
+ *  @ref veditor
+ *
+ *  @section building Building
+ *  Build:
+ *  @code
+ *  mkdir build
+ *  cd build
+ *  cmake ..
+ *  cmake --build .
+ *  cmake --build . --target test
+ *  @endcode
+ */
