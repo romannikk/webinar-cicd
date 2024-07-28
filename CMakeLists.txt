@@ -1,22 +1,19 @@
-cmake_minimum_required(VERSION 3.12.4)
+cmake_minimum_required(VERSION 3.10)
 
-IF(DEFINED ENV{TRAVIS_BUILD_NUMBER})
-  set(VERSION 0.0.$ENV{TRAVIS_BUILD_NUMBER})
-ELSE()  
-  set(VERSION 0.0.1)
-ENDIF()
+set(PATCH_VERSION "2" CACHE INTERNAL "Patch version")
+set(PROJECT_VESRION 0.1.${PATCH_VERSION})
 
-project(veditor VERSION ${VERSION})
-
-find_package(Threads)
-find_package(Doxygen COMPONENTS dot)
+project(veditor VERSION ${PROJECT_VESRION})
 
 set(EXEC_NAME ${CMAKE_PROJECT_NAME})
-set(TEST_NAME gtest_${CMAKE_PROJECT_NAME})
+set(TEST_NAME test_${CMAKE_PROJECT_NAME})
 include_directories("inc/")
 set(SRC_PATH "src/")
 set(TEST_PATH "test/")
-set(GTEST_SRCDIR "/usr/src/gtest/")
+
+find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+
+configure_file(${TEST_PATH}/version.h.in ${TEST_PATH}/version.h)
 
 add_executable(${EXEC_NAME} 
   ${SRC_PATH}/main.cpp
@@ -25,53 +22,54 @@ add_executable(${EXEC_NAME}
   ${SRC_PATH}/core/editormodel.cpp 
 )
 
-if(EXISTS "${GTEST_SRCDIR}/CMakeLists.txt")
-  add_subdirectory(${GTEST_SRCDIR}/ ${CMAKE_BINARY_DIR}/gtest/ EXCLUDE_FROM_ALL)
+add_library(${TEST_NAME} ${TEST_PATH}/lib.cpp)
+add_executable(test_version ${TEST_PATH}/test_version.cpp)
 
-  add_executable(${TEST_NAME} 
-    ${TEST_PATH}/main_test.cpp     
-  )
-
-  target_link_libraries(${TEST_NAME}
-    PRIVATE
-    gtest
-    ${CMAKE_THREAD_LIBS_INIT})
-  add_test(${TEST_NAME} ${TEST_NAME})
-else()
-  message(
-    WARNING
-    "Test suite will not be launched because GTest sources is not found at "
-    "${GTEST_SRCDIR}.")
-endif()
-
-if(DOXYGEN_FOUND)
-  configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    @ONLY)
-  add_custom_target(
-    html
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/
-    COMMENT "Creating HTML documentation with Doxygen" VERBATIM)
-endif()
+target_include_directories(${EXEC_NAME} 
+    PRIVATE "${CMAKE_BINARY_DIR}"
+)
 
 set_target_properties(${EXEC_NAME} ${TEST_NAME} PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
 
+set_target_properties(test_version PROPERTIES
+    COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
+    INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR}
+)
+
+target_link_libraries(${EXEC_NAME} PRIVATE
+  ${TEST_NAME}
+)
+
+target_link_libraries(test_version
+    ${Boost_LIBRARIES}
+    ${TEST_NAME}
+)
+
 if (MSVC)
     target_compile_options(${EXEC_NAME} PRIVATE /W4)
     target_compile_options(${TEST_NAME} PRIVATE /W4)
+    target_compile_options(test_version PRIVATE /W4)
 else ()
     target_compile_options(${EXEC_NAME} PRIVATE -Wall -Wextra -pedantic -Werror)
     target_compile_options(${TEST_NAME} PRIVATE -Wall -Wextra -pedantic -Werror)
+    target_compile_options(test_version PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
 install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)
 
 set(CPACK_GENERATOR DEB)
-set(CPACK_PACKAGE_CONTACT wladimir.shishov@gmail.com)
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+
+set(CPACK_PACKAGE_CONTACT example@example.com)
+
 include(CPack)
+
+enable_testing()
+
+add_test(test_version test_version)
