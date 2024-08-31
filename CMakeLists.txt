@@ -3,61 +3,59 @@ cmake_minimum_required(VERSION 3.10)
 set(PATCH_VERSION "2" CACHE INTERNAL "Patch version")
 set(PROJECT_VESRION 0.1.${PATCH_VERSION})
 
-project(helloworld VERSION ${PROJECT_VESRION})
+project(matrix VERSION ${PROJECT_VESRION})
+
+set(EXEC_NAME ${CMAKE_PROJECT_NAME})
+set(TEST_NAME test_${CMAKE_PROJECT_NAME})
+include_directories("inc/")
+set(SRC_PATH ".")
+set(TEST_PATH "tests/")
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
-configure_file(version.h.in version.h)
+configure_file(${TEST_PATH}/version.h.in ${TEST_PATH}/version.h)
 
-add_executable(helloworld_cli main.cpp)
-add_library(helloworld lib.cpp)
-add_executable(test_version test_version.cpp)
-
-set_target_properties(helloworld_cli helloworld test_version PROPERTIES
-    CXX_STANDARD 14
-    CXX_STANDARD_REQUIRED ON
+add_executable(${EXEC_NAME} 
+  ${SRC_PATH}/main.cpp
 )
-target_include_directories(helloworld
+
+add_library(${TEST_NAME} ${TEST_PATH}/lib.cpp)
+add_executable(test_version ${TEST_PATH}/test_version.cpp)
+
+target_include_directories(${EXEC_NAME} 
     PRIVATE "${CMAKE_BINARY_DIR}"
 )
+
+set_target_properties(${EXEC_NAME} ${TEST_NAME} PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
+
 set_target_properties(test_version PROPERTIES
     COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
     INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR}
 )
 
-target_link_libraries(helloworld_cli PRIVATE
-    helloworld
+target_link_libraries(${EXEC_NAME} PRIVATE
+  ${TEST_NAME}
 )
+
 target_link_libraries(test_version
     ${Boost_LIBRARIES}
-    helloworld
+    ${TEST_NAME}
 )
 
 if (MSVC)
-    target_compile_options(helloworld_cli PRIVATE
-        /W4
-    )
-    target_compile_options(helloworld PRIVATE
-        /W4
-    )
-    target_compile_options(test_version PRIVATE
-        /W4
-    )
+    target_compile_options(${EXEC_NAME} PRIVATE /W4)
+    target_compile_options(${TEST_NAME} PRIVATE /W4)
+    target_compile_options(test_version PRIVATE /W4)
 else ()
-    target_compile_options(helloworld_cli PRIVATE
-        -Wall -Wextra -pedantic -Werror
-    )
-    target_compile_options(helloworld PRIVATE
-        -Wall -Wextra -pedantic -Werror
-    )
-    target_compile_options(test_version PRIVATE
-        -Wall -Wextra -pedantic -Werror
-    )
+    target_compile_options(${EXEC_NAME} PRIVATE -Wall -Wextra -pedantic -Werror)
+    target_compile_options(${TEST_NAME} PRIVATE -Wall -Wextra -pedantic -Werror)
+    target_compile_options(test_version PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
-
-
-install(TARGETS helloworld_cli RUNTIME DESTINATION bin)
+install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)
 
 set(CPACK_GENERATOR DEB)
 
